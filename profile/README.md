@@ -2,11 +2,13 @@
 
 **Distributed AI inference across heterogeneous compute resources.**
 
-InfraMesh is an open-source platform for connecting and utilizing distributed **GPU and CPU resources** for AI inference.
+InfraMesh is an open-source platform for connecting and orchestrating distributed **GPU and CPU resources** as a unified AI inference infrastructure.
 
-It provides a centralized control plane, a common Node SDK, and reference implementations for building Router and Worker nodes that participate in the InfraMesh network.
+It provides a centralized **control plane and inference orchestration layer**, a common **Node SDK and protocol contracts**, and reference implementations for building Router and Worker nodes.
 
-InfraMesh is designed to make it easier to run AI across **personal computers, GPU servers, on-premise infrastructure, and cloud environments**, while managing both **private and public AI resources** through a common infrastructure.
+InfraMesh enables AI workloads to run across **personal computers, GPU servers, on-premise infrastructure, and cloud environments**, while allowing both **private and public AI resources** to participate in the same inference network.
+
+Applications interact with InfraMesh through a common entry point, while the infrastructure handles routing, Worker selection, node connectivity, and inference execution across heterogeneous environments.
 
 ## Why InfraMesh?
 
@@ -20,13 +22,13 @@ However, using AI across **multiple computers and environments as a single infra
 
 A developer or organization may already have:
 
-* Personal computers with available GPU or CPU resources
-* Developer workstations capable of running local AI models
-* Dedicated GPU servers
-* On-premise infrastructure
-* Private AI models that must remain inside controlled environments
-* Open models running through runtimes such as Ollama or vLLM
-* Public or commercial AI services for workloads that do not require private infrastructure
+- Personal computers with available GPU or CPU resources
+- Developer workstations capable of running local AI models
+- Dedicated GPU servers
+- On-premise infrastructure
+- Private AI models that must remain inside controlled environments
+- Open models running through runtimes such as Ollama or vLLM
+- Public or commercial AI services for workloads that do not require private infrastructure
 
 These resources can all provide AI inference independently, but they are usually operated as separate systems.
 
@@ -34,14 +36,14 @@ Applications must know where models are running, how to communicate with each ru
 
 As infrastructure grows, applications can gradually become responsible for:
 
-* Tracking where models are running
-* Managing multiple inference endpoints
-* Selecting available inference servers
-* Handling unavailable or overloaded nodes
-* Integrating different AI runtimes
-* Monitoring GPU, CPU, memory, latency, and request load
-* Distinguishing between private and public AI resources
-* Updating integrations whenever infrastructure changes
+- Tracking where models are running
+- Managing multiple inference endpoints
+- Selecting available inference servers
+- Handling unavailable or overloaded nodes
+- Integrating different AI runtimes
+- Monitoring GPU, CPU, memory, latency, and request load
+- Distinguishing between private and public AI resources
+- Updating integrations whenever infrastructure changes
 
 InfraMesh moves these concerns into a shared infrastructure layer.
 
@@ -57,16 +59,16 @@ Instead of treating every computer and AI runtime as an isolated inference serve
                          Application
                               │
                               ▼
-                         InfraMesh
+                          InfraMesh
                               │
-             ┌────────────────┼────────────────┐
-             │                │                │
-             ▼                ▼                ▼
-        Personal PC       GPU Server       Cloud Node
-             │                │                │
-          Local AI        Private AI        Public AI
-             │                │                │
-           Ollama            vLLM          Provider
+              ┌───────────────┼───────────────┐
+              │               │               │
+              ▼               ▼               ▼
+         Personal PC      GPU Server      Cloud Node
+              │               │               │
+           Local AI       Private AI       Public AI
+              │               │               │
+            Ollama           vLLM          Provider
 ```
 
 A single personal computer can participate as a Worker today.
@@ -89,7 +91,7 @@ InfraMesh is designed to allow both environments to coexist within the same infr
                          Application
                               │
                               ▼
-                         InfraMesh
+                          InfraMesh
                               │
                  ┌────────────┴────────────┐
                  │                         │
@@ -103,7 +105,7 @@ InfraMesh is designed to allow both environments to coexist within the same infr
    / GPU Server      AI Server
 ```
 
-Routing policies can determine which resources are eligible for a request.
+Routing policies determine which resources are eligible for a request.
 
 Private workloads can be restricted to locally controlled or private infrastructure, while other workloads can use a broader set of available AI resources.
 
@@ -157,25 +159,25 @@ Workers do not need to use identical hardware or software.
 
 Different machines can provide different:
 
-* GPUs and CPUs
-* Models
-* AI runtimes
-* Performance characteristics
-* Resource capacities
-* Deployment environments
+- GPUs and CPUs
+- Models
+- AI runtimes
+- Performance characteristics
+- Resource capacities
+- Deployment environments
 
 ### Route using runtime information
 
 Routing decisions can consider runtime information such as:
 
-* Worker availability
-* Supported models
-* Current request load
-* Queue state
-* Average latency
-* GPU utilization
-* VRAM utilization
-* Private or public execution requirements
+- Worker availability
+- Supported models
+- Current request load
+- Queue state
+- Average latency
+- GPU utilization
+- VRAM utilization
+- Private or public execution requirements
 
 ### Avoid runtime lock-in
 
@@ -185,54 +187,86 @@ Instead, it provides the infrastructure layer that connects, manages, and coordi
 
 Developers can also implement their own Router and Worker nodes using the common `infra-node` SDK.
 
-## Overview
+## Platform Overview
 
-InfraMesh separates the management of the inference network from the implementation of individual Router and Worker nodes.
+InfraMesh separates **infrastructure management**, **routing decisions**, and **inference execution** into distinct responsibilities.
 
 ```text
-                         InfraMesh
-                             │
-                          Console
-                             │
-                    ┌────────┴────────┐
-                    │                 │
-                 Router            Worker
-                    │                 │
+                         Application
+                              │
+                              ▼
+                    ┌─────────────────┐
+                    │     Console     │
+                    │  infra-console  │
                     └────────┬────────┘
                              │
+                     Routing Strategy
+                             │
+              ┌──────────────┴──────────────┐
+              │                             │
+              ▼                             ▼
+       Console Routing                  AI Router
+   Round Robin / Latency / Busy        infra-router
+              │                             │
+              └──────────────┬──────────────┘
+                             │
+                       Worker Selection
+                             │
+                             ▼
+                    ┌─────────────────┐
+                    │     Worker      │
+                    │  infra-worker   │
+                    └────────┬────────┘
+                             │
+                             ▼
                          AI Runtime
+
+          Router / Worker built with infra-node
 ```
 
-The platform is organized around four repositories:
+The **Console** is the primary entry point into the InfraMesh network.
 
-```text
-InfraMesh
-├── infra-console    # Control plane
-├── infra-node       # Common Node SDK and specifications
-├── infra-router     # Router reference implementation
-└── infra-worker     # Worker reference implementation
-```
+Depending on the configured routing strategy, Worker selection can be performed directly by the Console or delegated to a Router.
 
-`infra-router` and `infra-worker` are built on top of `infra-node` and provide example implementations that demonstrate how Router and Worker nodes can participate in the InfraMesh network.
+The selected Worker executes the inference request using its configured AI runtime.
 
 ## Components
 
 ### infra-console
 
-The **InfraMesh Console** is the control plane of the platform.
+The **InfraMesh Console** is the control plane and inference orchestration layer of the platform.
 
 It manages the resources and configuration required to operate an InfraMesh network, including:
 
-* Organizations and teams
-* Router and Worker nodes
-* Node registration and configuration
-* Routing strategies
-* Service API keys
-* Inference requests
-* Node runtime state
-* Usage and execution information
+- Organizations and teams
+- Router and Worker nodes
+- Node registration and connectivity
+- Routing strategies
+- Service API keys
+- Inference requests
+- Node runtime state
+- Usage and execution information
 
-Applications send inference requests through the Console, which coordinates Router and Worker nodes according to the configured routing strategy.
+Applications send inference requests through the Console.
+
+The Console determines how the request should be routed according to the configured routing strategy.
+
+Worker selection can be handled directly by built-in routing strategies or delegated to a Router.
+
+The Console then coordinates request execution with the selected Worker.
+
+```text
+Application
+     │
+     ▼
+  Console
+     │
+     ├── Organization / Team Management
+     ├── Authentication / API Keys
+     ├── Node Management
+     ├── Routing
+     └── Inference Orchestration
+```
 
 The Console acts as the primary entry point for applications using the InfraMesh inference network.
 
@@ -240,60 +274,83 @@ The Console acts as the primary entry point for applications using the InfraMesh
 
 ### infra-node
 
-**InfraMesh Node** is the core SDK for building nodes that participate in the InfraMesh network.
+**InfraMesh Node** is the core SDK and common protocol foundation for building Router and Worker nodes.
 
-It defines the common contracts shared between the Console, Router, and Worker implementations.
+It defines the contracts shared between the Console, Router, and Worker implementations.
 
 It provides:
 
-* Common request and response specifications
-* Router interfaces and DTOs
-* Worker interfaces and DTOs
-* Node communication contracts
-* Runtime integrations
-* Shared infrastructure
-* Example integration components
-
-Developers can use `infra-node` to build their own Router or Worker implementations without depending on the provided reference projects.
+- Common request and response specifications
+- Router contracts and DTOs
+- Worker contracts and DTOs
+- Node communication contracts
+- Node health information
+- Runtime integrations
+- Shared infrastructure
+- Integration components
 
 ```text
                      infra-node
                          │
               ┌──────────┴──────────┐
               │                     │
+              ▼                     ▼
            Router                 Worker
-        Implementation         Implementation
+      Implementation         Implementation
 ```
+
+Developers can use `infra-node` to build their own Router or Worker implementations without depending on the provided reference projects.
+
+This keeps communication contracts consistent while allowing implementations to use different routing algorithms, AI runtimes, frameworks, and infrastructure.
 
 ---
 
 ### infra-router
 
-**InfraMesh Router** is a reference Router implementation built using `infra-node`.
+**InfraMesh Router** is a reference routing implementation built using `infra-node`.
 
-It demonstrates how routing logic can be implemented to select an appropriate Worker for an inference request.
+Its responsibility is focused on **Worker selection**.
 
-Routing strategies can consider information such as:
+The Console provides the Router with an inference request and the eligible Worker candidates.
 
-* Available Workers
-* Supported models
-* Request load
-* Queue state
-* Average latency
-* GPU utilization
-* VRAM utilization
-* Request routing requirements
+The Router evaluates those candidates and returns the Worker that should execute the request.
 
-Example routing strategies include:
+```text
+Console
+   │
+   │ RoutingRequest
+   │ + Worker Candidates
+   ▼
+ Router
+   │
+   │ Worker Selection
+   ▼
+Console
+```
 
-* Round Robin
-* Least Latency
-* Least Busy
-* AI-based Routing
+Routing decisions can consider information such as:
 
-The Router is responsible for routing decisions and coordination.
+- Available Workers
+- Supported models
+- Request load
+- Queue state
+- Average latency
+- GPU utilization
+- VRAM utilization
+- Request routing requirements
 
-It does not execute AI inference itself.
+Example routing approaches can include:
+
+- Runtime-aware routing
+- Rule-based routing
+- AI-assisted routing
+- Custom routing algorithms
+
+The Router does **not** execute AI inference.
+
+It also does not need to manage the transport or runtime used by the selected Worker.
+
+Its role is to make a routing decision and return the selected Worker to the Console.
 
 ---
 
@@ -301,63 +358,125 @@ It does not execute AI inference itself.
 
 **InfraMesh Worker** is a reference Worker implementation built using `infra-node`.
 
-It demonstrates how a compute node can connect an AI runtime to the InfraMesh network.
+A Worker represents an execution node capable of processing AI inference requests.
 
-A Worker receives inference requests and delegates execution to its configured AI runtime.
+It receives requests from the InfraMesh infrastructure and delegates execution to its configured AI runtime.
+
+```text
+Console
+   │
+   │ Inference Request
+   ▼
+ Worker
+   │
+   ▼
+AI Runtime
+   │
+   ▼
+Inference Result
+```
 
 Worker implementations can represent different environments such as:
 
-* Personal computers
-* Developer workstations
-* GPU servers
-* CPU-only machines
-* On-premise infrastructure
-* Cloud compute instances
+- Personal computers
+- Developer workstations
+- GPU servers
+- CPU-only machines
+- On-premise infrastructure
+- Cloud compute instances
+- External AI providers
 
 Different AI runtimes and frameworks can be integrated behind the Worker implementation.
 
-This allows machines with different hardware, models, and AI runtimes to participate in the same InfraMesh network.
+Examples include:
 
-## Architecture
+- Ollama
+- vLLM
+- Spring AI integrations
+- Custom inference runtimes
+- External AI providers
 
-The relationship between the projects can be represented as:
+This allows machines with different hardware, models, runtimes, and deployment environments to participate in the same InfraMesh network.
+
+## Routing Architecture
+
+InfraMesh separates routing orchestration from Worker selection.
+
+The Console always remains the central orchestration point.
 
 ```text
-                         Application
-                              │
-                              ▼
-                       ┌─────────────┐
-                       │   Console   │
-                       │infra-console│
-                       └──────┬──────┘
-                              │
-                  ┌───────────┴───────────┐
-                  │                       │
-                  ▼                       ▼
-          ┌───────────────┐       ┌───────────────┐
-          │    Router     │       │    Worker     │
-          │ infra-router  │       │ infra-worker  │
-          └───────┬───────┘       └───────┬───────┘
-                  │                       │
-                  │                       ▼
-                  │                  AI Runtime
-                  │
-                  └──────────┐
-                             │
-                       Worker Selection
-
-          ─────────────────────────────────────
-                  Built with infra-node
-          ─────────────────────────────────────
+                         Request
+                            │
+                            ▼
+                         Console
+                            │
+                            ▼
+                    Routing Strategy
+                            │
+            ┌───────────────┴───────────────┐
+            │                               │
+            ▼                               ▼
+     Built-in Routing                  AI_ROUTER
+            │                               │
+     Round Robin                        Router
+     Least Latency                         │
+     Least Busy                            │
+            │                               │
+            └───────────────┬───────────────┘
+                            │
+                            ▼
+                     Selected Worker
+                            │
+                            ▼
+                       Inference
 ```
 
-`infra-node` defines the common foundation, while `infra-router` and `infra-worker` demonstrate concrete implementations of those contracts.
+Built-in routing strategies allow the Console to select a Worker without involving an external Router.
 
-The Console manages the inference network and determines how requests enter the infrastructure.
+When an AI Router strategy is configured, the Console builds the eligible Worker candidate list and delegates the selection decision to the Router.
 
-Depending on the configured routing strategy, Worker selection can be handled directly by the Console or delegated to a Router.
+The Router returns the selected Worker, while the Console continues to orchestrate the actual inference request.
 
-The selected Worker is responsible for executing the actual AI inference through its configured runtime.
+## Node Connectivity
+
+InfraMesh nodes can participate in the network without requiring applications to communicate with individual inference runtimes directly.
+
+The Console maintains the infrastructure-level relationship between applications and execution nodes.
+
+```text
+Application
+     │
+     ▼
+  Console
+     │
+     ▼
+   Worker
+     │
+     ▼
+AI Runtime
+```
+
+Node connectivity is separated from application-facing inference APIs.
+
+This allows Worker implementations and their underlying runtimes to change without requiring applications to understand how individual nodes are deployed or connected.
+
+## Session-Aware Routing
+
+Distributed inference can require more than simply selecting the least busy Worker for every request.
+
+Requests belonging to the same conversation or session may benefit from continuing on the same Worker.
+
+InfraMesh supports session-aware routing so that repeated requests associated with the same session can maintain Worker affinity when appropriate.
+
+```text
+Session A
+   │
+   ├── Request 1 ──► Worker 2
+   ├── Request 2 ──► Worker 2
+   └── Request 3 ──► Worker 2
+```
+
+Routing state can be maintained independently from the application so that applications do not need to track which Worker handled previous requests.
 
 ## Bring Your Own Node
 
@@ -367,31 +486,31 @@ Developers can use `infra-node` to implement nodes that fit their own infrastruc
 
 ```text
                          infra-node
-                             │
-          ┌──────────────────┼──────────────────┐
-          │                  │                  │
-          ▼                  ▼                  ▼
-    infra-router       Custom Router      Custom Worker
-                                            │
-                                  ┌─────────┼─────────┐
-                                  ▼         ▼         ▼
-                              Spring AI    vLLM     Custom
+                            │
+          ┌─────────────────┼─────────────────┐
+          │                 │                 │
+          ▼                 ▼                 ▼
+    infra-router      Custom Router      Custom Worker
+                                               │
+                                    ┌──────────┼──────────┐
+                                    ▼          ▼          ▼
+                                Spring AI     vLLM      Custom
 ```
-
-This allows InfraMesh to work with heterogeneous hardware, models, frameworks, and inference runtimes without coupling the platform to a single implementation.
 
 A custom Worker could represent anything from a personal computer running a local model to a dedicated GPU server or an integration with an external AI provider.
 
 A custom Router can implement routing policies appropriate for a particular infrastructure or workload.
 
+This allows InfraMesh to work with heterogeneous hardware, models, frameworks, and inference runtimes without coupling the platform to a single implementation.
+
 ## Repositories
 
-| Repository      | Description                                                                               |
-| --------------- | ----------------------------------------------------------------------------------------- |
-| `infra-console` | Control plane for managing organizations, teams, nodes, routing, and inference requests   |
-| `infra-node`    | Core SDK, common specifications, interfaces, and integrations for Router and Worker nodes |
-| `infra-router`  | Reference Router implementation built with `infra-node`                                   |
-| `infra-worker`  | Reference Worker implementation built with `infra-node`                                   |
+| Repository | Description |
+| --- | --- |
+| `infra-console` | Control plane and inference orchestration layer for the InfraMesh distributed AI inference network |
+| `infra-node` | Core SDK and common protocol contracts for building Router and Worker nodes in the InfraMesh distributed AI inference network |
+| `infra-router` | Reference routing engine for intelligent Worker selection in the InfraMesh distributed AI inference network |
+| `infra-worker` | Reference Worker implementation for executing AI inference in the InfraMesh distributed AI inference network |
 
 ## Design Philosophy
 
@@ -431,11 +550,13 @@ InfraMesh provides a common infrastructure layer between applications and infere
 
 Routing and inference execution are separate responsibilities.
 
-Routers decide where requests should run, while Workers are responsible for executing them.
+The Console orchestrates requests, routing logic selects Workers, and Workers execute inference.
+
+This separation allows each responsibility to evolve independently.
 
 ### Extensible nodes
 
-Router and Worker implementations can be customized using the common `infra-node` SDK.
+Router and Worker implementations can be customized using the common `infra-node` SDK and protocol contracts.
 
 Developers are not restricted to the provided reference implementations.
 
@@ -445,7 +566,12 @@ InfraMesh is not tied to a single AI runtime, framework, model provider, or hard
 
 Existing and future AI runtimes can participate through Worker implementations without changing the overall architecture.
 
+### Application simplicity
+
+Applications interact with a stable InfraMesh entry point rather than managing individual inference servers.
+
+Infrastructure can change, expand, or move without requiring applications to track the underlying topology.
+
 ## License
 
 License information is available in each repository.
-
