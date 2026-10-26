@@ -96,11 +96,13 @@ Workers can use different:
 
 InfraMesh does not require identical hardware or software across nodes.
 
-### Intelligent Worker routing
+### Flexible Worker routing
 
-Select Workers using built-in routing strategies or custom Router implementations.
+Select Workers using three built-in Console routing strategies or a custom Router implementation.
 
-Routing decisions can consider Worker availability, supported models, request load, latency, resource utilization, and execution requirements.
+The Console provides `ROUND_ROBIN`, `LEAST_LATENCY`, and `LEAST_BUSY`.
+
+For custom routing requirements, `AI_ROUTER` delegates Worker selection to a Router implementation whose algorithms, models, and policies are determined by its developers.
 
 ### Private and public AI
 
@@ -152,10 +154,10 @@ InfraMesh separates **infrastructure management**, **routing decisions**, and **
               ┌──────────────┴──────────────┐
               │                             │
               ▼                             ▼
-       Built-in Routing                 AI Router
-       ROUND_ROBIN                    infra-router
-       LEAST_LATENCY                       │
-       LEAST_BUSY                          │
+       Built-in Routing                Custom Router
+       ROUND_ROBIN                      AI_ROUTER
+       LEAST_LATENCY                        │
+       LEAST_BUSY                           │
               │                             │
               └──────────────┬──────────────┘
                              │
@@ -175,11 +177,11 @@ InfraMesh separates **infrastructure management**, **routing decisions**, and **
 
 The **Console** is the primary entry point into the InfraMesh network.
 
-Depending on the configured routing strategy, Worker selection is performed directly by the Console or delegated to a Router.
+Depending on the configured routing strategy, Worker selection is performed directly by the Console or delegated to a custom Router.
 
 The selected Worker executes the inference request using its configured AI runtime.
 
-The Router does not execute inference or communicate directly with the selected Worker.
+A custom Router does not execute inference or communicate directly with the selected Worker.
 
 ## Components
 
@@ -205,7 +207,7 @@ Applications send inference requests to the Console.
 
 The Console authenticates requests, determines eligible Workers, applies routing policies, and coordinates inference execution.
 
-Worker selection can be performed through built-in strategies or delegated to a custom Router.
+Worker selection can be performed through three built-in strategies or delegated to a custom Router.
 
 The Console remains responsible for orchestration regardless of the routing strategy.
 
@@ -244,39 +246,41 @@ Developers can build custom nodes without depending on the provided reference im
 
 ### infra-router
 
-**InfraMesh Router** provides reference implementations for Worker selection using the common `infra-node` SDK.
+**InfraMesh Router** provides reference implementations for building custom Worker selection logic using the common `infra-node` SDK.
 
-The Router receives an inference request and eligible Worker candidates from the Console, evaluates them according to its implementation, and returns the selected Worker.
+Unlike the three built-in routing strategies provided by the Console, a custom Router is an independent component responsible for selecting a Worker according to its own implementation.
+
+The Console provides the Router with an inference request and eligible Worker candidates.
 
 ```text
 Console
    │
    │ RoutingRequest
-   │ + Worker Candidates
+   │ + Eligible Worker Candidates
    ▼
- Router
+Custom Router
    │
    │ RoutingResponse
    ▼
 Console
 ```
 
-**Routing logic is entirely determined by the Router implementation.**
+**The development team implementing the Router determines its routing logic.**
 
-Developers are free to choose the algorithms, models, frameworks, and policies that best fit their requirements.
+Developers can choose the algorithms, AI models, frameworks, and policies that best fit their requirements.
 
-InfraMesh does not prescribe how a Router must evaluate requests or select Workers.
+InfraMesh provides the communication contracts and connection infrastructure without imposing a specific routing algorithm.
 
-The Router's responsibilities are limited to:
+A custom Router is responsible for:
 
-- Receiving routing requests and eligible Worker candidates from the Console
-- Selecting a Worker according to its own implementation
+- Receiving routing requests and eligible Worker candidates
+- Evaluating candidates according to its own implementation
 - Returning the selected Worker to the Console
 - Optionally rejecting requests with structured error codes when its routing policies cannot be satisfied
 
 The Router does **not** execute inference or call Workers directly.
 
-The Console remains responsible for validating the Router's selection and orchestrating inference execution.
+The Console validates the returned selection and remains responsible for coordinating inference execution.
 
 ### infra-worker
 
@@ -322,20 +326,67 @@ Workers can support blocking and streaming inference depending on their implemen
 
 InfraMesh separates routing orchestration from Worker selection.
 
-The Console supports four routing strategies.
+The Console provides **three built-in routing strategies** and supports custom Router implementations through `AI_ROUTER`.
 
 | Strategy | Description |
 | --- | --- |
 | `ROUND_ROBIN` | Distributes requests across eligible Workers in rotation. |
-| `LEAST_LATENCY` | Selects a Worker based on observed latency. |
+| `LEAST_LATENCY` | Selects a Worker based on observed response latency. |
 | `LEAST_BUSY` | Selects a Worker based on current workload. |
-| `AI_ROUTER` | Delegates Worker selection to a Router implementation. |
+| `AI_ROUTER` | Delegates Worker selection to a custom Router implementation. |
 
-Built-in strategies select Workers directly within the Console.
+### Built-in Routing
 
-With `AI_ROUTER`, the Console provides eligible Worker candidates to the Router and validates the returned selection.
+The Console provides three built-in routing strategies that do not require a separate Router implementation.
 
-### Worker eligibility
+**ROUND_ROBIN**
+
+Distributes inference requests across eligible Workers in rotation.
+
+**LEAST_LATENCY**
+
+Selects a Worker based on observed response latency.
+
+**LEAST_BUSY**
+
+Selects a Worker based on current workload.
+
+These strategies are implemented and managed directly by the Console.
+
+### Custom Router (AI_ROUTER)
+
+When `AI_ROUTER` is selected, the Console delegates Worker selection to a Router implementation.
+
+```text
+Console
+   │
+   │ RoutingRequest
+   │ + Eligible Worker Candidates
+   ▼
+Custom Router
+   │
+   │ RoutingResponse
+   ▼
+Console
+   │
+   ▼
+Selected Worker
+   │
+   ▼
+AI Runtime
+```
+
+**The routing logic is entirely determined by the team implementing the Router.**
+
+Developers can choose their own algorithms, AI models, frameworks, and routing policies.
+
+InfraMesh does not prescribe how a custom Router must evaluate requests or select Workers.
+
+The Router receives the eligible Worker candidates, evaluates them according to its implementation, and returns the selected Worker.
+
+The Console validates the selected Worker and remains responsible for inference orchestration.
+
+### Worker Eligibility
 
 Before selecting a Worker, the Console evaluates applicable constraints, including:
 
@@ -345,15 +396,13 @@ Before selecting a Worker, the Console evaluates applicable constraints, includi
 - Private execution requirements
 - Worker capacity
 
+These constraints apply regardless of the selected routing strategy.
+
 Custom Routers can apply additional selection policies using the candidate information and routing hints they receive.
 
-Routing strategies determine which eligible Worker should execute a request.
+### Structured Routing Errors
 
-They do not change the responsibility of the Console to orchestrate inference execution.
-
-### Structured routing errors
-
-Router implementations can return structured refusal codes when a request cannot satisfy their policies.
+Custom Routers can return structured refusal codes when their routing policies cannot be satisfied.
 
 InfraMesh supports refusal codes such as:
 
@@ -695,13 +744,7 @@ A custom Worker can integrate:
 - Custom inference engines
 - External AI providers
 
-A custom Router can implement:
-
-- Rule-based routing
-- Request-complexity-aware routing
-- Model-aware routing
-- Runtime-aware routing
-- Custom policy enforcement
+A custom Router can implement routing logic using any algorithms, models, frameworks, or policies chosen by its development team.
 
 The SDK provides shared communication contracts and connection infrastructure while leaving routing decisions and inference execution to individual implementations.
 
@@ -713,8 +756,8 @@ This allows InfraMesh to support heterogeneous hardware, frameworks, and AI runt
 | --- | --- |
 | `infra-console` | Control plane and inference orchestration layer for the InfraMesh distributed AI inference network |
 | `infra-node` | Core SDK, shared protocol contracts, and common Node infrastructure |
-| `infra-router` | Reference Router implementations for intelligent Worker selection |
-| `infra-worker` | Reference Worker implementations for executing AI inference |
+| `infra-router` | Reference implementations for custom Worker selection |
+| `infra-worker` | Reference implementations for executing AI inference |
 
 ## Design Philosophy
 
@@ -730,7 +773,9 @@ Inference workloads can run across independent nodes with different hardware, mo
 
 ### Decoupled routing and execution
 
-The Console orchestrates requests, Routers make selection decisions, and Workers execute inference.
+The Console orchestrates requests, custom Routers make Worker selection decisions, and Workers execute inference.
+
+The Console also provides three built-in routing strategies that operate without a separate Router.
 
 Each responsibility can evolve independently.
 
