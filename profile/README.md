@@ -4,21 +4,21 @@
 
 InfraMesh is an open-source platform for connecting and orchestrating distributed **GPU and CPU resources** as a unified AI inference infrastructure.
 
-It provides a centralized **control plane and inference orchestration layer**, a common **Node SDK and protocol contracts**, and reference implementations for building Router and Worker nodes.
+It provides a centralized **control plane and inference orchestration layer**, a common **Node SDK and protocol contracts**, and extensible Router and Worker implementations.
 
-InfraMesh enables AI workloads to run across **personal computers, GPU servers, on-premise infrastructure, and cloud environments**, while allowing both **private and public AI resources** to participate in the same inference network.
+InfraMesh enables AI workloads to run across **personal computers, GPU servers, on-premise infrastructure, and cloud environments**, allowing both **private and public AI resources** to participate in the same inference network.
 
-Applications interact with InfraMesh through a common entry point, while the infrastructure handles routing, Worker selection, node connectivity, and inference execution across heterogeneous environments.
+Applications interact with InfraMesh through a common entry point, while the infrastructure manages routing, Worker selection, node connectivity, and inference execution across heterogeneous environments.
 
 ## Why InfraMesh?
 
-AI models are evolving rapidly.
+AI models are evolving rapidly, and the open AI ecosystem continues to grow.
 
-At the same time, the open AI ecosystem continues to grow. More models can now be downloaded, customized, and executed directly on consumer GPUs, personal computers, workstations, and privately owned servers.
+More models can now be downloaded, customized, and executed directly on consumer GPUs, personal computers, workstations, and privately owned servers.
 
 Running an AI model on a single machine has become increasingly accessible.
 
-However, using AI across **multiple computers and environments as a single infrastructure** is still considerably more complicated.
+However, using AI across **multiple computers and environments as a single infrastructure** remains considerably more complicated.
 
 A developer or organization may already have:
 
@@ -27,25 +27,24 @@ A developer or organization may already have:
 - Dedicated GPU servers
 - On-premise infrastructure
 - Private AI models that must remain inside controlled environments
-- Open models running through runtimes such as Ollama or vLLM
-- Public or commercial AI services for workloads that do not require private infrastructure
+- Open models running through Ollama or vLLM
+- Public or commercial AI services
 
-These resources can all provide AI inference independently, but they are usually operated as separate systems.
+These resources can provide AI inference independently, but they are usually operated as separate systems.
 
-Applications must know where models are running, how to communicate with each runtime, which nodes are available, and which AI resources are appropriate for each request.
+Applications must know where models are running, how to communicate with each runtime, which nodes are available, and which resources are appropriate for each request.
 
 As infrastructure grows, applications can gradually become responsible for:
 
-- Tracking where models are running
-- Managing multiple inference endpoints
+- Tracking models and inference endpoints
 - Selecting available inference servers
 - Handling unavailable or overloaded nodes
 - Integrating different AI runtimes
-- Monitoring GPU, CPU, memory, latency, and request load
-- Distinguishing between private and public AI resources
+- Monitoring resource utilization and request load
+- Enforcing private and public execution requirements
 - Updating integrations whenever infrastructure changes
 
-InfraMesh moves these concerns into a shared infrastructure layer.
+InfraMesh moves these responsibilities into a shared infrastructure layer.
 
 ### The Idea
 
@@ -71,123 +70,71 @@ Instead of treating every computer and AI runtime as an isolated inference serve
             Ollama           vLLM          Provider
 ```
 
-A single personal computer can participate as a Worker today.
+A single personal computer can participate as a Worker.
 
 Additional computers, GPU servers, on-premise machines, or cloud resources can be connected later without requiring applications to redesign how they access AI.
 
-This allows AI infrastructure to grow gradually from the compute resources that are already available.
+This allows AI infrastructure to grow gradually from the compute resources already available.
 
-## Private and Public AI
+## Key Features
 
-Not every AI workload should be executed in the same environment.
+### Distributed AI inference
 
-Some requests may contain sensitive or private information and need to remain within locally controlled infrastructure.
+Connect multiple independent compute resources into a unified inference network.
 
-Other workloads may benefit from public or commercial AI services.
+Workers can operate on personal computers, GPU servers, CPU-only machines, on-premise infrastructure, and cloud environments.
 
-InfraMesh is designed to allow both environments to coexist within the same infrastructure.
+### Heterogeneous compute
 
-```text
-                         Application
-                              │
-                              ▼
-                          InfraMesh
-                              │
-                 ┌────────────┴────────────┐
-                 │                         │
-                 ▼                         ▼
-            Private AI                 Public AI
-                 │                         │
-        ┌────────┴────────┐         External / Cloud
-        │                 │          AI Providers
-        ▼                 ▼
-   Personal PC       On-Premise
-   / GPU Server      AI Server
-```
-
-Routing policies determine which resources are eligible for a request.
-
-Private workloads can be restricted to locally controlled or private infrastructure, while other workloads can use a broader set of available AI resources.
-
-Applications do not need to manage these environments independently.
-
-They communicate with InfraMesh, while the infrastructure determines how requests should be handled according to the configured routing policies.
-
-## What InfraMesh Enables
-
-### Use the hardware you already have
-
-Existing personal computers, developer workstations, GPU servers, and CPU machines can participate in the inference network.
-
-Building distributed AI infrastructure does not have to begin with a dedicated GPU cluster.
-
-### Scale incrementally
-
-InfraMesh can start with a single machine.
-
-Additional Workers can be connected as more compute resources become available.
-
-Applications can continue using the same InfraMesh entry point while the underlying infrastructure grows.
-
-### Utilize idle compute resources
-
-GPU and CPU resources that would otherwise remain unused can participate in AI inference workloads.
-
-This makes it possible to distribute workloads across available machines instead of relying entirely on a single inference server.
-
-### Run AI close to your data
-
-Private AI models can run on personal machines, internal GPU servers, or on-premise infrastructure.
-
-Requests that require private processing can be routed to appropriate resources instead of being sent to external AI services.
-
-### Combine private and public AI
-
-Local AI and external AI services do not need to exist as completely separate infrastructures.
-
-InfraMesh provides a common layer for managing different types of AI resources while preserving routing constraints between them.
-
-### Avoid coupling applications to infrastructure
-
-Applications communicate with InfraMesh rather than individual Workers or AI runtimes.
-
-Changing a Worker, model runtime, or physical machine does not require applications to understand the entire infrastructure topology.
-
-### Support heterogeneous environments
-
-Workers do not need to use identical hardware or software.
-
-Different machines can provide different:
+Workers can use different:
 
 - GPUs and CPUs
-- Models
-- AI runtimes
-- Performance characteristics
+- AI models
+- Inference runtimes
 - Resource capacities
 - Deployment environments
 
-### Route using runtime information
+InfraMesh does not require identical hardware or software across nodes.
 
-Routing decisions can consider runtime information such as:
+### Intelligent Worker routing
 
-- Worker availability
-- Supported models
-- Current request load
-- Queue state
-- Average latency
-- GPU utilization
-- VRAM utilization
-- Private or public execution requirements
+Select Workers using built-in routing strategies or custom Router implementations.
 
-### Avoid runtime lock-in
+Routing decisions can consider Worker availability, supported models, request load, latency, resource utilization, and execution requirements.
 
-InfraMesh does not attempt to replace AI runtimes such as Ollama, vLLM, Spring AI integrations, or custom inference systems.
+### Private and public AI
 
-Instead, it provides the infrastructure layer that connects, manages, and coordinates them across distributed compute resources.
+Allow private infrastructure and external AI services to participate in the same network.
 
-Developers can also implement their own Router and Worker nodes using the common `infra-node` SDK.
+Routing policies determine which resources are eligible for each request.
 
-## Platform Overview
+### Outbound node connectivity
+
+Connect Router and Worker nodes through persistent WebSocket connections initiated by the nodes themselves.
+
+This allows nodes behind NAT or inside private networks to participate without exposing their own public inference endpoints.
+
+### Session-aware routing
+
+Maintain Worker affinity for requests belonging to the same logical session.
+
+### Worker capacity management
+
+Control concurrent inference execution through Worker capacity limits and in-flight request reservations.
+
+### Runtime independence
+
+Integrate Ollama, vLLM, Spring AI, custom inference runtimes, and external AI providers through Worker implementations.
+
+### Extensible Router and Worker SDK
+
+Build custom nodes using shared protocol contracts, authentication, health monitoring, outbound connectivity, and structured error handling.
+
+### OpenAI-compatible inference
+
+Integrate applications through supported OpenAI-compatible API conventions without requiring direct access to individual Workers.
+
+## Architecture
 
 InfraMesh separates **infrastructure management**, **routing decisions**, and **inference execution** into distinct responsibilities.
 
@@ -205,8 +152,10 @@ InfraMesh separates **infrastructure management**, **routing decisions**, and **
               ┌──────────────┴──────────────┐
               │                             │
               ▼                             ▼
-       Console Routing                  AI Router
-   Round Robin / Latency / Busy        infra-router
+       Built-in Routing                 AI Router
+       ROUND_ROBIN                    infra-router
+       LEAST_LATENCY                       │
+       LEAST_BUSY                          │
               │                             │
               └──────────────┬──────────────┘
                              │
@@ -226,68 +175,58 @@ InfraMesh separates **infrastructure management**, **routing decisions**, and **
 
 The **Console** is the primary entry point into the InfraMesh network.
 
-Depending on the configured routing strategy, Worker selection can be performed directly by the Console or delegated to a Router.
+Depending on the configured routing strategy, Worker selection is performed directly by the Console or delegated to a Router.
 
 The selected Worker executes the inference request using its configured AI runtime.
+
+The Router does not execute inference or communicate directly with the selected Worker.
 
 ## Components
 
 ### infra-console
 
-The **InfraMesh Console** is the control plane and inference orchestration layer of the platform.
+**InfraMesh Console** is the control plane and inference orchestration layer.
 
-It manages the resources and configuration required to operate an InfraMesh network, including:
+It manages:
 
-- Organizations and teams
+- Organizations, Teams, and Team Members
 - Router and Worker nodes
 - Node registration and connectivity
 - Routing strategies
-- Service API keys
+- Team Member API Keys
+- Node credentials
 - Inference requests
+- Session affinity
+- Worker capacity
 - Node runtime state
-- Usage and execution information
+- Audit logs and operational information
 
-Applications send inference requests through the Console.
+Applications send inference requests to the Console.
 
-The Console determines how the request should be routed according to the configured routing strategy.
+The Console authenticates requests, determines eligible Workers, applies routing policies, and coordinates inference execution.
 
-Worker selection can be handled directly by built-in routing strategies or delegated to a Router.
+Worker selection can be performed through built-in strategies or delegated to a custom Router.
 
-The Console then coordinates request execution with the selected Worker.
-
-```text
-Application
-     │
-     ▼
-  Console
-     │
-     ├── Organization / Team Management
-     ├── Authentication / API Keys
-     ├── Node Management
-     ├── Routing
-     └── Inference Orchestration
-```
-
-The Console acts as the primary entry point for applications using the InfraMesh inference network.
-
----
+The Console remains responsible for orchestration regardless of the routing strategy.
 
 ### infra-node
 
-**InfraMesh Node** is the core SDK and common protocol foundation for building Router and Worker nodes.
-
-It defines the contracts shared between the Console, Router, and Worker implementations.
+**InfraMesh Node** is the core SDK and common protocol foundation for Router and Worker implementations.
 
 It provides:
 
-- Common request and response specifications
-- Router contracts and DTOs
-- Worker contracts and DTOs
-- Node communication contracts
-- Node health information
-- Runtime integrations
-- Shared infrastructure
-- Integration components
+- Shared Router and Worker protocol contracts
+- Inference and chat DTOs
+- Node registration and connection contracts
+- Node API Key authentication
+- Node health monitoring
+- CPU, memory, and GPU monitoring
+- Outbound WebSocket connection infrastructure
+- Automatic reconnection and heartbeat
+- Streaming and cancellation support
+- Active request tracking
+- Structured error propagation
+- Spring Boot integration
 
 ```text
                      infra-node
@@ -299,21 +238,17 @@ It provides:
       Implementation         Implementation
 ```
 
-Developers can use `infra-node` to build their own Router or Worker implementations without depending on the provided reference projects.
+The SDK provides reusable infrastructure so that Router and Worker implementations can focus on their own business logic.
 
-This keeps communication contracts consistent while allowing implementations to use different routing algorithms, AI runtimes, frameworks, and infrastructure.
-
----
+Developers can build custom nodes without depending on the provided reference implementations.
 
 ### infra-router
 
-**InfraMesh Router** is a reference routing implementation built using `infra-node`.
+**InfraMesh Router** provides reference implementations for Worker selection.
 
-Its responsibility is focused on **Worker selection**.
+The Console supplies the Router with an inference request and eligible Worker candidates.
 
-The Console provides the Router with an inference request and the eligible Worker candidates.
-
-The Router evaluates those candidates and returns the Worker that should execute the request.
+The Router evaluates the request and candidates, then returns the Worker that should execute inference.
 
 ```text
 Console
@@ -323,44 +258,35 @@ Console
    ▼
  Router
    │
-   │ Worker Selection
+   │ RoutingResponse
    ▼
 Console
 ```
 
-Routing decisions can consider information such as:
+Routing implementations can consider:
 
-- Available Workers
+- Worker availability
 - Supported models
-- Request load
+- Request complexity
+- Current request load
 - Queue state
 - Average latency
-- GPU utilization
-- VRAM utilization
-- Request routing requirements
+- GPU and VRAM utilization
+- Routing constraints
 
-Example routing approaches can include:
+Router implementations can use rule-based algorithms, runtime metrics, AI-assisted decisions, or custom policies.
 
-- Runtime-aware routing
-- Rule-based routing
-- AI-assisted routing
-- Custom routing algorithms
+The provided Laya-based Router demonstrates request-complexity-aware routing.
 
-The Router does **not** execute AI inference.
+The Router does **not** execute inference or call Workers directly.
 
-It also does not need to manage the transport or runtime used by the selected Worker.
-
-Its role is to make a routing decision and return the selected Worker to the Console.
-
----
+Custom Routers can also reject requests using structured error codes when their routing policies cannot be satisfied.
 
 ### infra-worker
 
-**InfraMesh Worker** is a reference Worker implementation built using `infra-node`.
+**InfraMesh Worker** provides reference implementations for executing AI inference.
 
-A Worker represents an execution node capable of processing AI inference requests.
-
-It receives requests from the InfraMesh infrastructure and delegates execution to its configured AI runtime.
+A Worker receives an inference request from the Console and delegates execution to its configured AI runtime.
 
 ```text
 Console
@@ -376,7 +302,7 @@ AI Runtime
 Inference Result
 ```
 
-Worker implementations can represent different environments such as:
+Worker implementations can represent:
 
 - Personal computers
 - Developer workstations
@@ -386,87 +312,182 @@ Worker implementations can represent different environments such as:
 - Cloud compute instances
 - External AI providers
 
-Different AI runtimes and frameworks can be integrated behind the Worker implementation.
-
-Examples include:
+Supported integration approaches include:
 
 - Ollama
 - vLLM
-- Spring AI integrations
+- Spring AI
 - Custom inference runtimes
-- External AI providers
+- External AI services
 
-This allows machines with different hardware, models, runtimes, and deployment environments to participate in the same InfraMesh network.
+Workers can support blocking and streaming inference depending on their implementation.
 
-## Routing Architecture
+## Routing & Worker Selection
 
 InfraMesh separates routing orchestration from Worker selection.
 
-The Console always remains the central orchestration point.
+The Console supports four routing strategies.
 
-```text
-                         Request
-                            │
-                            ▼
-                         Console
-                            │
-                            ▼
-                    Routing Strategy
-                            │
-            ┌───────────────┴───────────────┐
-            │                               │
-            ▼                               ▼
-     Built-in Routing                  AI_ROUTER
-            │                               │
-     Round Robin                        Router
-     Least Latency                         │
-     Least Busy                            │
-            │                               │
-            └───────────────┬───────────────┘
-                            │
-                            ▼
-                     Selected Worker
-                            │
-                            ▼
-                       Inference
-```
+| Strategy | Description |
+| --- | --- |
+| `ROUND_ROBIN` | Distributes requests across eligible Workers in rotation. |
+| `LEAST_LATENCY` | Selects a Worker based on observed latency. |
+| `LEAST_BUSY` | Selects a Worker based on current workload. |
+| `AI_ROUTER` | Delegates Worker selection to a Router implementation. |
 
-Built-in routing strategies allow the Console to select a Worker without involving an external Router.
+Built-in strategies select Workers directly within the Console.
 
-When an AI Router strategy is configured, the Console builds the eligible Worker candidate list and delegates the selection decision to the Router.
+With `AI_ROUTER`, the Console provides eligible Worker candidates to the Router and validates the returned selection.
 
-The Router returns the selected Worker, while the Console continues to orchestrate the actual inference request.
+### Worker eligibility
+
+Before selecting a Worker, the Console evaluates applicable constraints, including:
+
+- Node availability
+- Enabled and drain states
+- Streaming compatibility
+- Private execution requirements
+- Worker capacity
+
+Custom Routers can apply additional selection policies using the candidate information and routing hints they receive.
+
+Routing strategies determine which eligible Worker should execute a request.
+
+They do not change the responsibility of the Console to orchestrate inference execution.
+
+### Structured routing errors
+
+Router implementations can return structured refusal codes when a request cannot satisfy their policies.
+
+InfraMesh supports refusal codes such as:
+
+| Error Code | Meaning |
+| --- | --- |
+| `PRIVATE_DATA_NO_LOCAL_WORKER` | No eligible local Worker satisfies the private execution requirement. |
+| `SENSITIVE_DATA_NO_LOCAL_WORKER` | A Router-specific sensitive-data policy requires local execution, but no eligible local Worker is available. |
+
+Supported refusal codes are propagated through the Console as HTTP `422` responses.
+
+The Console returns standardized client-facing messages rather than exposing arbitrary Router error messages.
+
+Unknown Router error codes are handled as upstream response errors.
 
 ## Node Connectivity
 
-InfraMesh nodes can participate in the network without requiring applications to communicate with individual inference runtimes directly.
+InfraMesh supports two connection modes for Router and Worker nodes.
 
-The Console maintains the infrastructure-level relationship between applications and execution nodes.
+### DIRECT
 
 ```text
-Application
-     │
-     ▼
-  Console
-     │
-     ▼
-   Worker
-     │
-     ▼
-AI Runtime
+Console ───── HTTP ─────▶ Router / Worker
 ```
 
-Node connectivity is separated from application-facing inference APIs.
+In DIRECT mode, the Console sends HTTP requests to the configured Node endpoint.
 
-This allows Worker implementations and their underlying runtimes to change without requiring applications to understand how individual nodes are deployed or connected.
+The Node must be reachable from the Console.
 
-## Session-Aware Routing
+DIRECT is the default connection mode.
 
-Distributed inference can require more than simply selecting the least busy Worker for every request.
+### OUTBOUND
 
-Requests belonging to the same conversation or session may benefit from continuing on the same Worker.
+```text
+Router / Worker
+      │
+      │ Persistent WebSocket
+      ▼
+   Console
+```
 
-InfraMesh supports session-aware routing so that repeated requests associated with the same session can maintain Worker affinity when appropriate.
+In OUTBOUND mode, the Node initiates a persistent WebSocket connection to the Console.
+
+This allows a Node to participate without exposing its own public IP address or inbound HTTP port.
+
+OUTBOUND is particularly useful for:
+
+- Personal computers
+- Developer workstations
+- Nodes behind NAT
+- Private networks
+- Environments where inbound connections are restricted
+
+The Node must still be able to establish an outbound connection to the Console.
+
+### Outbound Connection SDK
+
+The `infra-node` SDK provides the common outbound connection infrastructure.
+
+It handles:
+
+- WebSocket connection lifecycle
+- Node credential authentication
+- Automatic reconnection
+- Exponential backoff
+- Heartbeat
+- Runtime health reporting
+- Request dispatch
+- Streaming responses
+- Request cancellation
+- Graceful shutdown
+
+Router and Worker implementations only need to provide their routing or inference logic.
+
+Both DIRECT and OUTBOUND nodes participate in the same routing and inference architecture.
+
+## Private & Public AI
+
+Not every AI workload should be executed in the same environment.
+
+Some requests require private processing, while others can use public or commercial AI services.
+
+InfraMesh allows both environments to coexist.
+
+```text
+                         Application
+                              │
+                              ▼
+                          InfraMesh
+                              │
+                 ┌────────────┴────────────┐
+                 │                         │
+                 ▼                         ▼
+            Private AI                 Public AI
+                 │                         │
+        ┌────────┴────────┐         External / Cloud
+        │                 │          AI Providers
+        ▼                 ▼
+   Personal PC       On-Premise
+   / GPU Server      AI Server
+```
+
+### Explicit privacy constraints
+
+Applications can specify private execution requirements through routing parameters such as `privateData`.
+
+When private execution is required, the Console excludes Workers classified as external resources.
+
+A local Worker represents a resource classified for private execution. It does not necessarily have to run on the same physical machine as the application.
+
+If no eligible local Worker is available, the Console rejects the request rather than silently routing it to an external provider.
+
+### Sensitive-data classification
+
+Private execution requirements and automatic sensitive-data detection are different responsibilities.
+
+InfraMesh enforces explicit routing constraints, but **does not automatically classify sensitive information by default**.
+
+Custom Router implementations may provide additional classification or security policies.
+
+Such classification depends on the Router implementation and should not be assumed to provide complete detection of sensitive information.
+
+This separation allows InfraMesh to support different security requirements without coupling the platform to a specific classification model.
+
+## Session Affinity & Capacity
+
+### Session affinity
+
+Requests belonging to the same conversation may benefit from continuing on the same Worker.
+
+InfraMesh supports Redis-based session affinity.
 
 ```text
 Session A
@@ -476,13 +497,186 @@ Session A
    └── Request 3 ──► Worker 2
 ```
 
-Routing state can be maintained independently from the application so that applications do not need to track which Worker handled previous requests.
+When session affinity is enabled, the Console attempts to reuse the previously selected Worker.
+
+An existing affinity binding is validated against current Worker constraints before reuse.
+
+If the binding is unavailable or invalid, normal routing is performed.
+
+Session affinity can be configured independently for different Teams.
+
+When an affinity binding is reused, the Console does not invoke the Router for that request.
+
+Applications do not need to maintain Worker affinity themselves.
+
+### Worker capacity
+
+InfraMesh supports Worker concurrency limits through in-flight request reservations.
+
+Capacity management helps prevent additional requests from being assigned to Workers that have reached their configured concurrency limits.
+
+Reservation storage supports:
+
+- In-memory tracking
+- Redis-based shared tracking
+
+Redis-based tracking allows multiple Console instances to coordinate Worker capacity.
+
+Capacity management and session affinity are separate mechanisms.
+
+Session affinity determines whether an existing Worker should be reused, while capacity management controls whether that Worker can accept additional requests.
+
+## Security & Identity
+
+InfraMesh separates application authentication, Node authentication, and Node connection credentials.
+
+### Application authentication
+
+The Console provides JWT-based authentication for management operations.
+
+Organizations, Teams, and Team Members provide the administrative structure for managing infrastructure access.
+
+### Team Member API Keys
+
+Applications can authenticate inference requests using Team Member API Keys.
+
+These keys associate requests with a specific Team Member and Team.
+
+This allows inference requests to carry authenticated identity context through the infrastructure.
+
+### Node authentication
+
+DIRECT Node communication can use Node API Keys.
+
+These credentials are separate from application-facing authentication.
+
+### Outbound Node credentials
+
+OUTBOUND nodes authenticate their WebSocket connections using Node credentials issued by the Console.
+
+Node credentials support:
+
+- Credential issuance
+- Multiple credentials per Node
+- Credential rotation
+- Credential revocation
+- Optional expiration
+- Connection termination when credentials are revoked or expire
+
+Credentials are used during connection authentication and are not included in inference message payloads.
+
+### Identity propagation
+
+The common protocol can propagate authenticated identity information, including:
+
+- Team identity
+- Team Member identity
+- Session identity
+
+These identifiers can help custom Router and Worker implementations implement scoped application features.
+
+They are identifiers, not authentication credentials.
+
+InfraMesh does not provide automatic long-term conversation memory. Custom implementations can use identity context to integrate their own memory systems.
+
+### Audit logging
+
+The Console records supported administrative and security-related operations through audit logs.
+
+Audit retention helps manage accumulated operational records.
+
+## OpenAI-Compatible API
+
+InfraMesh provides OpenAI-compatible inference endpoints for applications that use supported OpenAI API conventions.
+
+Applications communicate with the Console instead of individual inference servers.
+
+```text
+OpenAI-Compatible Client
+          │
+          ▼
+     InfraMesh Console
+          │
+          ▼
+     Routing Strategy
+          │
+          ▼
+         Worker
+          │
+          ▼
+       AI Runtime
+```
+
+This allows applications to use the InfraMesh inference network without managing individual Worker endpoints.
+
+Supported operations include chat inference and streaming responses.
+
+Compatibility applies to the API operations and features implemented by InfraMesh; it does not imply complete compatibility with every OpenAI API feature.
+
+## Getting Started
+
+InfraMesh can be deployed using the Console and one or more Worker nodes.
+
+### 1. Start InfraMesh Console
+
+Deploy the Console using a supported distribution method.
+
+Available distribution approaches include:
+
+- Docker
+- Standalone packages for supported operating systems
+
+### 2. Configure the infrastructure
+
+Use the Console to create the required Organization and Team configuration.
+
+Configure authentication and routing settings.
+
+### 3. Register a Worker
+
+Connect a Worker using DIRECT or OUTBOUND mode.
+
+The Worker can run on a personal computer, GPU server, or another supported environment.
+
+### 4. Configure routing
+
+Select a routing strategy for the Team.
+
+Built-in strategies can select Workers directly.
+
+Alternatively, configure a Router to provide custom Worker selection logic.
+
+### 5. Send an inference request
+
+Applications send inference requests to the Console using a supported API.
+
+```text
+Application
+     │
+     ▼
+  Console
+     │
+     ▼
+Routing Strategy
+     │
+     ▼
+   Worker
+     │
+     ▼
+AI Runtime
+```
+
+The Console handles Worker selection and request orchestration.
+
+Additional Workers can be connected later without changing the application's infrastructure integration.
+
+Refer to the individual repositories for installation instructions, configuration, and API examples.
 
 ## Bring Your Own Node
 
 InfraMesh does not require Router and Worker nodes to use only the provided reference implementations.
 
-Developers can use `infra-node` to implement nodes that fit their own infrastructure and AI stack.
+Developers can use `infra-node` to build nodes that fit their own infrastructure and AI stack.
 
 ```text
                          infra-node
@@ -497,80 +691,72 @@ Developers can use `infra-node` to implement nodes that fit their own infrastruc
                                 Spring AI     vLLM      Custom
 ```
 
-A custom Worker could represent anything from a personal computer running a local model to a dedicated GPU server or an integration with an external AI provider.
+A custom Worker can integrate:
 
-A custom Router can implement routing policies appropriate for a particular infrastructure or workload.
+- Local AI models
+- GPU inference servers
+- Spring AI applications
+- Custom inference engines
+- External AI providers
 
-This allows InfraMesh to work with heterogeneous hardware, models, frameworks, and inference runtimes without coupling the platform to a single implementation.
+A custom Router can implement:
+
+- Rule-based routing
+- Request-complexity-aware routing
+- Model-aware routing
+- Runtime-aware routing
+- Custom policy enforcement
+
+The SDK provides shared communication contracts and connection infrastructure while leaving routing decisions and inference execution to individual implementations.
+
+This allows InfraMesh to support heterogeneous hardware, frameworks, and AI runtimes without coupling the platform to a single implementation.
 
 ## Repositories
 
 | Repository | Description |
 | --- | --- |
 | `infra-console` | Control plane and inference orchestration layer for the InfraMesh distributed AI inference network |
-| `infra-node` | Core SDK and common protocol contracts for building Router and Worker nodes in the InfraMesh distributed AI inference network |
-| `infra-router` | Reference routing engine for intelligent Worker selection in the InfraMesh distributed AI inference network |
-| `infra-worker` | Reference Worker implementation for executing AI inference in the InfraMesh distributed AI inference network |
+| `infra-node` | Core SDK, shared protocol contracts, and common Node infrastructure |
+| `infra-router` | Reference Router implementations for intelligent Worker selection |
+| `infra-worker` | Reference Worker implementations for executing AI inference |
 
 ## Design Philosophy
 
-InfraMesh is designed around a few core principles.
+InfraMesh follows several core principles.
 
 ### Bring your own compute
 
-AI infrastructure should not require specialized infrastructure from the beginning.
+AI infrastructure should be able to use existing personal computers, workstations, GPU servers, and other available compute resources.
 
-Personal computers, workstations, GPU servers, and existing compute resources should be able to participate in the network.
+### Distributed and heterogeneous
 
-### Distributed by default
-
-AI inference workloads can be executed across multiple independent compute nodes.
-
-Infrastructure can grow from a single machine into a distributed network as additional resources become available.
-
-### Heterogeneous infrastructure
-
-Workers can have different GPUs, CPUs, models, capacities, runtime environments, and deployment locations.
-
-InfraMesh treats this diversity as part of the infrastructure rather than requiring every node to be identical.
-
-### Private and public AI coexistence
-
-Private, locally hosted AI and public AI services serve different purposes.
-
-InfraMesh is designed so that both can participate in the same infrastructure while routing policies determine which resources are appropriate for each request.
-
-### Decoupled applications and infrastructure
-
-Applications should not need to know where every model is running or which physical machine should execute a request.
-
-InfraMesh provides a common infrastructure layer between applications and inference resources.
+Inference workloads can run across independent nodes with different hardware, models, runtimes, and capacities.
 
 ### Decoupled routing and execution
 
-Routing and inference execution are separate responsibilities.
+The Console orchestrates requests, Routers make selection decisions, and Workers execute inference.
 
-The Console orchestrates requests, routing logic selects Workers, and Workers execute inference.
+Each responsibility can evolve independently.
 
-This separation allows each responsibility to evolve independently.
+### Private and public AI coexistence
 
-### Extensible nodes
-
-Router and Worker implementations can be customized using the common `infra-node` SDK and protocol contracts.
-
-Developers are not restricted to the provided reference implementations.
+Locally controlled infrastructure and external AI services can participate in the same network while respecting configured routing constraints.
 
 ### Runtime agnostic
 
-InfraMesh is not tied to a single AI runtime, framework, model provider, or hardware environment.
+InfraMesh does not replace AI runtimes.
 
-Existing and future AI runtimes can participate through Worker implementations without changing the overall architecture.
+It connects and coordinates existing inference systems through a common infrastructure layer.
+
+### Extensible by design
+
+Developers can implement custom Router and Worker nodes using shared SDK contracts without depending on reference implementations.
 
 ### Application simplicity
 
-Applications interact with a stable InfraMesh entry point rather than managing individual inference servers.
+Applications communicate with a stable InfraMesh entry point rather than managing individual inference servers.
 
-Infrastructure can change, expand, or move without requiring applications to track the underlying topology.
+Infrastructure can change, expand, or move without requiring applications to understand the underlying topology.
 
 ## License
 
