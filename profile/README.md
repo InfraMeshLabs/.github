@@ -244,11 +244,9 @@ Developers can build custom nodes without depending on the provided reference im
 
 ### infra-router
 
-**InfraMesh Router** provides reference implementations for Worker selection.
+**InfraMesh Router** provides reference implementations for Worker selection using the common `infra-node` SDK.
 
-The Console supplies the Router with an inference request and eligible Worker candidates.
-
-The Router evaluates the request and candidates, then returns the Worker that should execute inference.
+The Router receives an inference request and eligible Worker candidates from the Console, evaluates them according to its implementation, and returns the selected Worker.
 
 ```text
 Console
@@ -263,24 +261,22 @@ Console
 Console
 ```
 
-Routing implementations can consider:
+**Routing logic is entirely determined by the Router implementation.**
 
-- Worker availability
-- Supported models
-- Request complexity
-- Current request load
-- Queue state
-- Average latency
-- GPU and VRAM utilization
-- Routing constraints
+Developers are free to choose the algorithms, models, frameworks, and policies that best fit their requirements.
 
-Router implementations can use rule-based algorithms, runtime metrics, AI-assisted decisions, or custom policies.
+InfraMesh does not prescribe how a Router must evaluate requests or select Workers.
 
-The provided Laya-based Router demonstrates request-complexity-aware routing.
+The Router's responsibilities are limited to:
+
+- Receiving routing requests and eligible Worker candidates from the Console
+- Selecting a Worker according to its own implementation
+- Returning the selected Worker to the Console
+- Optionally rejecting requests with structured error codes when its routing policies cannot be satisfied
 
 The Router does **not** execute inference or call Workers directly.
 
-Custom Routers can also reject requests using structured error codes when their routing policies cannot be satisfied.
+The Console remains responsible for validating the Router's selection and orchestrating inference execution.
 
 ### infra-worker
 
